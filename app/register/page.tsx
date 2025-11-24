@@ -1,12 +1,17 @@
 "use client";
 
-import React, { FormEvent, useState, useEffect } from "react";
+import React, {
+  FormEvent,
+  useState,
+  useEffect,
+  Suspense,
+} from "react";
 import { useAuth, UserRole } from "@/contexts/AuthContext";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useI18n } from "@/hooks/useI18n";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-export default function RegisterPage() {
+function RegisterPageInner() {
   const { register } = useAuth();
   const t = useI18n();
   const { lang } = useLanguage();
@@ -123,5 +128,22 @@ export default function RegisterPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+// Diese Komponente wird von Next.js als /register-Seite benutzt
+export default function RegisterPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="auth-page">
+          <div className="auth-card">
+            <p>Lade Registrierungsformular...</p>
+          </div>
+        </div>
+      }
+    >
+      <RegisterPageInner />
+    </Suspense>
   );
 }
