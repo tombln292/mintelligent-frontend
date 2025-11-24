@@ -1,8 +1,8 @@
 "use client";
 
-import React, { FormEvent, useState } from "react";
+import React, { FormEvent, useState, useEffect } from "react";
 import { useAuth, UserRole } from "@/contexts/AuthContext";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useI18n } from "@/hooks/useI18n";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -11,12 +11,21 @@ export default function RegisterPage() {
   const t = useI18n();
   const { lang } = useLanguage();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<UserRole>("teacher");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // E-Mail aus der URL übernehmen (z.B. /register?email=foo@bar.de)
+  useEffect(() => {
+    const emailFromQuery = searchParams.get("email");
+    if (emailFromQuery) {
+      setEmail(emailFromQuery);
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -28,8 +37,8 @@ export default function RegisterPage() {
       console.error(err);
       alert(
         lang === "de"
-          ? "Registrierung fehlgeschlagen (Demo). Später wird hier Cognito verwendet."
-          : "Registration failed (demo). Cognito will be used here later."
+          ? "Registrierung fehlgeschlagen. Bitte später erneut versuchen."
+          : "Registration failed. Please try again later."
       );
     } finally {
       setLoading(false);

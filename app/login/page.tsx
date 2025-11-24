@@ -20,14 +20,21 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      await login({ email, password });
+      const result = await login({ identifier: email, password });
+
+      if (result === "not_registered") {
+        // ➜ automatisch zur Registrierungsseite
+        router.push(`/register?email=${encodeURIComponent(email)}`);
+        return;
+      }
+
       router.push("/");
     } catch (err) {
       console.error(err);
       alert(
         lang === "de"
-          ? "Login fehlgeschlagen (Demo). Später wird hier Cognito-Login genutzt."
-          : "Login failed (demo). Cognito login will be used here later."
+          ? "Login fehlgeschlagen. Bitte versuche es später erneut."
+          : "Login failed. Please try again later."
       );
     } finally {
       setLoading(false);

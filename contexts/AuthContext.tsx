@@ -4,16 +4,21 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 
 export type UserRole = "teacher" | "admin" | "other";
 
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+
 export type AuthUser = {
-  name: string;
-  email: string;
-  role: UserRole;
+  username: string;         // wir nehmen E-Mail als username
+  accessToken: string;      // kommt vom Backend
+  tokenType: string;        // z.B. "bearer"
+  chatIds: string[];        // Liste der bisherigen Chats
 };
 
 type AuthContextType = {
   user: AuthUser | null;
   isLoggedIn: boolean;
-  login: (params: { email: string; password: string }) => Promise<void>;
+  chatIds: string[];
+  login: (params: { identifier: string; password: string }) => Promise<"ok" | "not_registered">;
   register: (params: {
     name: string;
     email: string;
@@ -21,30 +26,44 @@ type AuthContextType = {
     role: UserRole;
   }) => Promise<void>;
   logout: () => Promise<void>;
+  addChatId: (id: string) => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const STORAGE_KEY = "mintelligent_auth_user";
+const STORAGE_KEY = "mintelligent_auth_user_v1";
+
+type LoginResponse = {
+  access_token: string;
+  token_type?: string;
+  history?: string[]; // Liste von ChatIDs
+};
+
+type RegisterBody = {
+  firstName: string;
+  LastName: string;
+  username: string;
+  password: string;
+  email: string;
+};
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
 
-  // User aus localStorage laden
+  // Beim Laden: User aus localStorage holen
   useEffect(() => {
     if (typeof window === "undefined") return;
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      try {
-        const parsed = JSON.parse(raw) as AuthUser;
-        setUser(parsed);
-      } catch {
-        // ignore
-      }
+    if (!raw) return;
+    try {
+      const parsed = JSON.parse(raw) as AuthUser;
+      setUser(parsed);
+    } catch {
+      // ignorieren
     }
   }, []);
 
-  // User speichern
+  // User speichern / löschen
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (user) {
@@ -54,35 +73,94 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [user]);
 
-  const login: AuthContextType["login"] = async ({ email }) => {
-    // TODO: Hier später Cognito / Amplify Auth verwenden
-    setUser({
-      name: email.split("@")[0] || email,
-      email,
-      role: "teacher",
+  const login: AuthContextType["login"] = async ({ identifier, password }) => {
+    // identifier = E-Mail (wir nutzen sie als username)
+    const body = {
+      username: identifier,
+      password,
+    };
+
+    const res = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
     });
+
+    if (res.status === 404 || res.status === 401) {
+      // Benutzer existiert nicht → später weiterleiten zur Registrierung
+      return "not_registered";
+    }
+
+    if (!res.ok) {
+      throw new Error("LOGIN_FAILED");
+    }
+
+    const data = (await res.json()) as LoginResponse;
+
+    const authUser: AuthUser = {
+      username: identifier,
+      accessToken: data.access_token,
+      tokenType: data.token_type ?? "bearer",
+      chatIds: data.history ?? [],
+    };
+
+    setUser(authUser);
+    return "ok";
   };
 
   const register: AuthContextType["register"] = async ({
     name,
     email,
-    role,
+    password,
+    role, // aktuell nur zur Info, wird noch nicht ans Backend geschickt
   }) => {
-    // TODO: Hier später Cognito SignUp verwenden
-    setUser({ name, email, role });
+    // Namen in Vor- und Nachname splitten (sehr einfache Logik)
+    const parts = name.trim().split(" ");
+    const firstName = parts[0] || "";
+    const lastName = parts.slice(1).join(" ") || firstName;
+
+    const body: RegisterBody = {
+      firstName,
+      LastName: lastName,
+      username: email, // wir nutzen E-Mail als username
+      password,
+      email,
+    };
+
+    const res = await fetch(`${API_BASE_URL}/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      throw new Error("REGISTER_FAILED");
+    }
+
+    // Nach erfolgreicher Registrierung direkt einloggen
+    await login({ identifier: email, password });
   };
 
   const logout: AuthContextType["logout"] = async () => {
-    // TODO: Hier später Cognito SignOut
+    // falls Backend einen Logout-Endpunkt hat, könnt ihr den hier aufrufen
     setUser(null);
+  };
+
+  const addChatId = (id: string) => {
+    if (!user) return;
+    if (user.chatIds.includes(id)) return;
+    const updated: AuthUser = { ...user, chatIds: [...user.chatIds, id] };
+    setUser(updated);
   };
 
   const value: AuthContextType = {
     user,
     isLoggedIn: !!user,
+    chatIds: user?.chatIds ?? [],
     login,
     register,
     logout,
+    addChatId,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
