@@ -232,10 +232,15 @@ export default function HomePage() {
           <nav>
             <ul>
               <li className="sidebar-item active">{t.navAbout}</li>
-              <li className="sidebar-item">{t.navProjects}</li>
-              <li className="sidebar-item">{t.navContact}</li>
+              <li
+                className="sidebar-item"
+                onClick={() => router.push("/contact")}
+              >
+                {t.navContact}
+              </li>
             </ul>
           </nav>
+
 
           {isLoggedIn && (
             <div style={{ marginTop: "16px" }}>
@@ -370,9 +375,26 @@ export default function HomePage() {
         </main>
       </div>
 
-      <footer className="app-footer">
+     <footer className="app-footer">
         <small>{t.footer}</small>
+        <div className="footer-links">
+          <button
+            type="button"
+            className="footer-link"
+            onClick={() => router.push("/impressum")}
+          >
+           Impressum
+          </button>
+          <button
+            type="button"
+            className="footer-link"
+            onClick={() => router.push("/datenschutz")}
+          >
+            Datenschutzerklärung
+          </button>
+       </div>
       </footer>
+
     </div>
   );
 }

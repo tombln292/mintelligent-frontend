@@ -377,7 +377,13 @@ body {
   font-size: 0.75rem;
   color: var(--text-muted);
   background: #ffffff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
+
 
 /* Responsive */
 
@@ -445,4 +451,23 @@ body {
   cursor: pointer;
   font: inherit;
   text-decoration: underline;
+}
+.footer-links {
+  display: flex;
+  gap: 12px;
+}
+
+.footer-link {
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.footer-link:hover {
+  opacity: 0.8;
 }
