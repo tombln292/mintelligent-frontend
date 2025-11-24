@@ -17,13 +17,21 @@ type Message = {
   timestamp: string;
 };
 
+type ChatHistoryResponse = {
+  id: string;
+  history: BackendHistoryItem[];
+};
+
 type BackendHistoryItem =
   | { sender: "user" | "bot"; text: string; timestamp?: string }
   | { role: "user" | "assistant"; content: string; timestamp?: string };
 
-type ChatResponse = {
-  id: string;
-  history: BackendHistoryItem[];
+type BotResponse = {
+  role: "assistant";
+  chat_id: number | string;
+  content: string;
+  status: "success" | "information" | "error";
+  visualization_data?: any;
 };
 
 function mapHistoryToMessages(history: BackendHistoryItem[]): Message[] {
@@ -31,7 +39,7 @@ function mapHistoryToMessages(history: BackendHistoryItem[]): Message[] {
     const isUser =
       "sender" in item ? item.sender === "user" : item.role === "user";
     const text = "text" in item ? item.text : item.content;
-    const ts = item.timestamp || new Date().toLocaleTimeString();
+    const ts = item.timestamp ?? "";
     return {
       id: index + 1,
       sender: isUser ? "user" : "assistant",
@@ -54,7 +62,7 @@ export default function HomePage() {
       sender: "assistant",
       text: t.initialAssistant,
       personalized: false,
-      timestamp: new Date().toLocaleTimeString(),
+      timestamp: "",
     },
   ]);
   const [input, setInput] = useState("");
@@ -85,7 +93,7 @@ export default function HomePage() {
       if (!res.ok) {
         throw new Error("CHAT_LOAD_FAILED");
       }
-      const data = (await res.json()) as ChatResponse;
+      const data = (await res.json()) as ChatHistoryResponse;
       setCurrentChatId(data.id);
       setMessages(mapHistoryToMessages(data.history));
     } catch (err) {
@@ -109,32 +117,59 @@ export default function HomePage() {
     if (isLoggedIn && user?.accessToken) {
       try {
         const body = {
-          message: trimmed,
-          chat_id: currentChatId, // null = neuer Chat
+          content: trimmed,
+          // chat_id: currentChatId, // null = neuer Chat
         };
 
-        const res = await fetch(`${API_BASE_URL}/chat`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `${user.tokenType ?? "Bearer"} ${
-              user.accessToken
-            }`,
-          },
-          body: JSON.stringify(body),
-        });
+        const url =
+        currentChatId != null
+          ? `${API_BASE_URL}/chat?chat_id=${currentChatId}`
+          : `${API_BASE_URL}/chat`;
 
+        const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `${user.tokenType ?? "Bearer"} ${user.accessToken}`,
+        },
+        body: JSON.stringify(body),
+      });
         if (!res.ok) {
           throw new Error("CHAT_SEND_FAILED");
         }
 
-        const data = (await res.json()) as ChatResponse;
+        const data = (await res.json()) as BotResponse;
 
-        setCurrentChatId(data.id);
-        setMessages(mapHistoryToMessages(data.history));
-        addChatId(data.id);
-        setInput("");
-        return;
+        const chatIdStr = String(data.chat_id);
+        if (!currentChatId) {
+          setCurrentChatId(chatIdStr);
+          addChatId(chatIdStr);
+        }
+
+        const now = new Date().toLocaleTimeString();
+
+        // 1) append user message
+        const userMsg: Message = {
+          id: Date.now(),
+          sender: "user",
+          text: trimmed,
+          personalized: true,
+          timestamp: now,
+        };
+
+// 2) append bot message from backend
+      const botMsg: Message = {
+        id: Date.now() + 1,
+        sender: "assistant",
+        text: data.content,
+        personalized: true,
+        timestamp: now, // or later from backend if you add it
+      };
+
+      setMessages((prev) => [...prev, userMsg, botMsg]);
+      setInput("");
+      return;
+
       } catch (err) {
         console.error(err);
         alert(

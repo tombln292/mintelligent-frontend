@@ -4,10 +4,10 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 
 export type UserRole = "teacher" | "admin" | "other";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+const API_BASE_URL = "http://127.0.0.1:8000";;
 
 export type AuthUser = {
+  id: number;
   username: string;         // wir nehmen E-Mail als username
   accessToken: string;      // kommt vom Backend
   tokenType: string;        // z.B. "bearer"
@@ -33,15 +33,23 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const STORAGE_KEY = "mintelligent_auth_user_v1";
 
+type ChatDTO = {
+  chat_id: number;
+  title: string;
+  created_at?: string | null;
+};
+
 type LoginResponse = {
   access_token: string;
   token_type?: string;
-  history?: string[]; // Liste von ChatIDs
+  history?: ChatDTO[]; // Liste von ChatIDs
+  user_id: number;
+  username: string;
 };
 
 type RegisterBody = {
-  firstName: string;
-  LastName: string;
+  first_name: string;
+  last_name: string;
   username: string;
   password: string;
   email: string;
@@ -97,11 +105,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const data = (await res.json()) as LoginResponse;
 
+    const chatIds = (data.history ?? []).map((chat) => String(chat.chat_id));
+
     const authUser: AuthUser = {
+      id: data.user_id,
       username: identifier,
       accessToken: data.access_token,
       tokenType: data.token_type ?? "bearer",
-      chatIds: data.history ?? [],
+      chatIds,
     };
 
     setUser(authUser);
@@ -120,8 +131,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const lastName = parts.slice(1).join(" ") || firstName;
 
     const body: RegisterBody = {
-      firstName,
-      LastName: lastName,
+      first_name: firstName,
+      last_name: lastName,
       username: email, // wir nutzen E-Mail als username
       password,
       email,

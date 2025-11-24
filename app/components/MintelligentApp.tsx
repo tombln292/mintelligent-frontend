@@ -23,7 +23,7 @@ const MintelligentApp: React.FC = () => {
       sender: "assistant",
       text: "Hallo, ich bin dein MINTelligent Assistent. Wie kann ich dir heute helfen?",
       personalized: false,
-      timestamp: new Date().toLocaleTimeString(),
+      timestamp: "",
     },
   ]);
   const [input, setInput] = useState("");
