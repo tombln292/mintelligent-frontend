@@ -471,3 +471,119 @@ body {
 .footer-link:hover {
   opacity: 0.8;
 }
+/* ========================= */
+/* Responsive Layout         */
+/* ========================= */
+
+/* Tablet & kleiner */
+@media (max-width: 1024px) {
+  .app-root {
+    padding: 8px;
+  }
+
+  .app-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .app-layout {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 8px;
+  }
+
+  .sidebar nav ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .sidebar-item {
+    width: auto;
+    padding: 6px 10px;
+  }
+
+  .main {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .chat-card {
+    min-height: auto;
+  }
+
+  .chat-window {
+    max-height: 50vh;
+  }
+}
+
+/* Handy-Ansicht: noch kompakter */
+@media (max-width: 640px) {
+  .app-root {
+    padding: 4px;
+  }
+
+  .app-header {
+    padding: 8px 10px;
+  }
+
+  .app-header-left h1 {
+    font-size: 1.1rem;
+  }
+
+  .app-header-right {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .user-chip {
+    margin-top: 4px;
+  }
+
+  .app-layout {
+    gap: 8px;
+  }
+
+  .sidebar {
+    padding: 8px 10px;
+    border-radius: 10px;
+  }
+
+  .chat-card {
+    padding: 10px;
+    border-radius: 10px;
+  }
+
+  .chat-window {
+    max-height: 55vh;
+  }
+
+  .chat-input-row {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .chat-input {
+    width: 100%;
+  }
+
+  .btn-primary,
+  .btn-outline {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .app-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+}
