@@ -18,7 +18,7 @@ type Message = {
 };
 
 type ChatHistoryResponse = {
-  id: string;
+  chat_id: string;
   history: BackendHistoryItem[];
 };
 
@@ -37,7 +37,7 @@ type BotResponse = {
 function mapHistoryToMessages(history: BackendHistoryItem[]): Message[] {
   return history.map((item, index) => {
     const isUser =
-      "sender" in item ? item.sender === "user" : item.role === "user";
+      !("visualization_data" in item);
     const text = "text" in item ? item.text : item.content;
     const ts = item.timestamp ?? "";
     return {
@@ -85,7 +85,7 @@ export default function HomePage() {
     if (!user?.accessToken) return;
     setLoadingChat(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/chat/${chatId}`, {
+      const res = await fetch(`${API_BASE_URL}/open?id=${chatId}`, {
         headers: {
           Authorization: `${user.tokenType ?? "Bearer"} ${user.accessToken}`,
         },
@@ -94,7 +94,7 @@ export default function HomePage() {
         throw new Error("CHAT_LOAD_FAILED");
       }
       const data = (await res.json()) as ChatHistoryResponse;
-      setCurrentChatId(data.id);
+      setCurrentChatId(data.chat_id);
       setMessages(mapHistoryToMessages(data.history));
     } catch (err) {
       console.error(err);
@@ -242,7 +242,10 @@ export default function HomePage() {
           {/* Login / Register / Logout schön gruppiert */}
           <div className="auth-header-buttons">
             {isLoggedIn ? (
-              <button className="btn btn-primary" onClick={() => logout()}>
+              <button className="btn btn-primary" onClick={() => {
+                setMessages([])
+                logout()
+              }}>
                 {t.logout}
               </button>
             ) : (
