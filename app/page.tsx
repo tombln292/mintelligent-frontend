@@ -1,6 +1,7 @@
 "use client";
 
 import React, { FormEvent, useEffect, useState } from "react";
+import ReactMarkdown from "react-markdown";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useI18n } from "@/hooks/useI18n";
@@ -186,7 +187,11 @@ export function VisualCard({ data }: { data: VisualizationData }) {
 export function renderMessageContent(m: Message) {
   return (
     <>
-      <div>{m.text}</div>
+      {m.sender === "assistant" ? (
+        <ReactMarkdown>{m.text}</ReactMarkdown>
+      ) : (
+        <div>{m.text}</div>
+      )}
       {m.visualization && <VisualCard data={m.visualization} />}
     </>
   );
