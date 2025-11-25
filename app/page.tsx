@@ -31,34 +31,149 @@ type Message = {
  * Place css for .visual-card, .visual-card-row, .visual-card-score etc. in your styles.
  */
 export function VisualCard({ data }: { data: VisualizationData }) {
+  type LayoutType = "table" | "bars" | "pie";
+
+  const layouts: LayoutType[] = ["table", "bars", "pie"];
+  const layout: LayoutType =
+    layouts[Math.floor(Math.random() * layouts.length)];
+
+  const clampScore = (value: number) => Math.max(0, Math.min(10, value));
+
+  const engagementScore = clampScore(data.engagement_score);
+  const difficultyScore = clampScore(data.difficulty_score);
+
+  const engagementPercent = (engagementScore / 10) * 100;
+  const difficultyPercent = (difficultyScore / 10) * 100;
+
+  const totalScore = engagementScore + difficultyScore || 1;
+  const engagementAngle = (engagementScore / totalScore) * 360;
+  const difficultyAngle = (difficultyScore / totalScore) * 360;
+
+  const pieStyle = {
+    backgroundImage: `conic-gradient(
+      #4caf50 0deg ${engagementAngle}deg,
+      #ff9800 ${engagementAngle}deg ${engagementAngle + difficultyAngle}deg,
+      #e0e0e0 ${engagementAngle + difficultyAngle}deg 360deg
+    )`,
+  };
+
   return (
     <div
-      className="visual-card"
+      className={`visual-card visual-card--${layout}`}
       role="group"
-      aria-label="activity-visualization"
+      aria-label={`activity-visualization-${layout}`}
     >
       <div className="visual-card-header">
         <strong>{data.activity_name}</strong>
       </div>
+
       <div className="visual-card-body">
-        <div className="visual-card-row">
-          <span className="visual-card-label">Engagement</span>
-          <span className="visual-card-score">{data.engagement_score}/10</span>
-        </div>
-        <div className="visual-card-row">
-          <span className="visual-card-label">Difficulty</span>
-          <span className="visual-card-score">{data.difficulty_score}/10</span>
-        </div>
-        <div className="visual-card-row">
-          <span className="visual-card-label">Costs</span>
-          <span className="visual-card-value">{data.cost_estimation}</span>
-        </div>
-        <div className="visual-card-row">
-          <span className="visual-card-label">Prep time</span>
-          <span className="visual-card-value">
-            {data.prep_time_minutes} min
-          </span>
-        </div>
+        {/* Original table layout */}
+        {layout === "table" && (
+          <>
+            <div className="visual-card-row">
+              <span className="visual-card-label">Engagement</span>
+              <span className="visual-card-score">{engagementScore}/10</span>
+            </div>
+            <div className="visual-card-row">
+              <span className="visual-card-label">Difficulty</span>
+              <span className="visual-card-score">{difficultyScore}/10</span>
+            </div>
+            <div className="visual-card-row">
+              <span className="visual-card-label">Costs</span>
+              <span className="visual-card-value">{data.cost_estimation}</span>
+            </div>
+            <div className="visual-card-row">
+              <span className="visual-card-label">Prep time</span>
+              <span className="visual-card-value">
+                {data.prep_time_minutes} min
+              </span>
+            </div>
+          </>
+        )}
+
+        {/* Bar chart layout */}
+        {layout === "bars" && (
+          <div
+            className="visual-card-chart visual-card-chart--bars"
+            role="img"
+            aria-label={`Engagement ${engagementScore} out of 10, difficulty ${difficultyScore} out of 10`}
+          >
+            <div className="visual-card-row">
+              <span className="visual-card-label">Engagement</span>
+              <div className="visual-card-bar-group">
+                <div className="visual-card-bar-track">
+                  <div
+                    className="visual-card-bar-fill visual-card-bar-fill--engagement"
+                    style={{ width: `${engagementPercent}%` }}
+                  />
+                </div>
+                <span className="visual-card-score">{engagementScore}/10</span>
+              </div>
+            </div>
+
+            <div className="visual-card-row">
+              <span className="visual-card-label">Difficulty</span>
+              <div className="visual-card-bar-group">
+                <div className="visual-card-bar-track">
+                  <div
+                    className="visual-card-bar-fill visual-card-bar-fill--difficulty"
+                    style={{ width: `${difficultyPercent}%` }}
+                  />
+                </div>
+                <span className="visual-card-score">{difficultyScore}/10</span>
+              </div>
+            </div>
+
+            <div className="visual-card-row">
+              <span className="visual-card-label">Costs</span>
+              <span className="visual-card-value">{data.cost_estimation}</span>
+            </div>
+            <div className="visual-card-row">
+              <span className="visual-card-label">Prep time</span>
+              <span className="visual-card-value">
+                {data.prep_time_minutes} min
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Pie chart layout */}
+        {layout === "pie" && (
+          <div className="visual-card-chart visual-card-chart--pie">
+            <div
+              className="visual-card-pie"
+              style={pieStyle}
+              role="img"
+              aria-label={`Engagement and difficulty distribution: engagement ${engagementScore}, difficulty ${difficultyScore}`}
+            />
+            <div className="visual-card-pie-legend">
+              <div className="visual-card-row">
+                <span className="visual-card-legend-swatch visual-card-legend-swatch--engagement" />
+                <span className="visual-card-label">
+                  Engagement: {engagementScore}/10
+                </span>
+              </div>
+              <div className="visual-card-row">
+                <span className="visual-card-legend-swatch visual-card-legend-swatch--difficulty" />
+                <span className="visual-card-label">
+                  Difficulty: {difficultyScore}/10
+                </span>
+              </div>
+            </div>
+
+            <div className="visual-card-row">
+              <span className="visual-card-label">Costs</span>
+              <span className="visual-card-value">{data.cost_estimation}</span>
+            </div>
+            <div className="visual-card-row">
+              <span className="visual-card-label">Prep time</span>
+              <span className="visual-card-value">
+                {data.prep_time_minutes} min
+              </span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -324,7 +439,8 @@ export default function HomePage() {
           sender: "assistant",
           text: data.content,
           personalized: true,
-          timestamp: now, // or later from backend if you add it
+          timestamp: now,
+          visualization: data.visualization_data,
         };
 
         setMessages((prev) => [...prev, userMsg, botMsg]);
