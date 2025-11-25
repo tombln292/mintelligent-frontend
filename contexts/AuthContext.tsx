@@ -4,21 +4,24 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 
 export type UserRole = "teacher" | "admin" | "other";
 
-const API_BASE_URL = "http://127.0.0.1:8000";;
+const API_BASE_URL = "http://127.0.0.1:8000";
 
 export type AuthUser = {
   id: number;
-  username: string;         // wir nehmen E-Mail als username
-  accessToken: string;      // kommt vom Backend
-  tokenType: string;        // z.B. "bearer"
-  chatIds: string[];        // Liste der bisherigen Chats
+  username: string; // wir nehmen E-Mail als username
+  accessToken: string; // kommt vom Backend
+  tokenType: string; // z.B. "bearer"
+  chatIds: string[]; // Liste der bisherigen Chats
 };
 
 type AuthContextType = {
   user: AuthUser | null;
   isLoggedIn: boolean;
   chatIds: string[];
-  login: (params: { identifier: string; password: string }) => Promise<"ok" | "not_registered">;
+  login: (params: {
+    identifier: string;
+    password: string;
+  }) => Promise<"ok" | "not_registered">;
   register: (params: {
     name: string;
     email: string;
@@ -27,6 +30,7 @@ type AuthContextType = {
   }) => Promise<void>;
   logout: () => Promise<void>;
   addChatId: (id: string) => void;
+  removeChatId: (id: string) => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -164,6 +168,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(updated);
   };
 
+  const removeChatId = (id: string) => {
+    if (!user) return;
+    const updated: AuthUser = {
+      ...user,
+      chatIds: user.chatIds.filter((cid) => cid !== id),
+    };
+    setUser(updated);
+  };
+
   const value: AuthContextType = {
     user,
     isLoggedIn: !!user,
@@ -172,6 +185,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     register,
     logout,
     addChatId,
+    removeChatId,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -179,6 +193,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
 export const useAuth = () => {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth muss innerhalb eines AuthProvider benutzt werden");
+  if (!ctx)
+    throw new Error("useAuth muss innerhalb eines AuthProvider benutzt werden");
   return ctx;
 };

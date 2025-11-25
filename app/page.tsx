@@ -32,7 +32,11 @@ type Message = {
  */
 export function VisualCard({ data }: { data: VisualizationData }) {
   return (
-    <div className="visual-card" role="group" aria-label="activity-visualization">
+    <div
+      className="visual-card"
+      role="group"
+      aria-label="activity-visualization"
+    >
       <div className="visual-card-header">
         <strong>{data.activity_name}</strong>
       </div>
@@ -51,7 +55,9 @@ export function VisualCard({ data }: { data: VisualizationData }) {
         </div>
         <div className="visual-card-row">
           <span className="visual-card-label">Prep time</span>
-          <span className="visual-card-value">{data.prep_time_minutes} min</span>
+          <span className="visual-card-value">
+            {data.prep_time_minutes} min
+          </span>
         </div>
       </div>
     </div>
@@ -75,15 +81,13 @@ export function renderMessageContent(m: Message) {
  * Convert backend BotResponse to Message (includes optional visualization_data mapping).
  * Use this helper when creating bot messages so visualization gets attached to Message.
  */
-export function botResponseToMessage(
-  data: {
-    role?: "assistant";
-    chat_id: number | string;
-    content: string;
-    status: string;
-    visualization_data?: any;
-  }
-): Message {
+export function botResponseToMessage(data: {
+  role?: "assistant";
+  chat_id: number | string;
+  content: string;
+  status: string;
+  visualization_data?: any;
+}): Message {
   const now = new Date().toLocaleTimeString();
   let viz: VisualizationData | null = null;
   if (data.visualization_data && typeof data.visualization_data === "object") {
@@ -137,22 +141,40 @@ type BotResponse = {
 
 function mapHistoryToMessages(history: BackendHistoryItem[]): Message[] {
   return history.map((item, index) => {
-    const isUser =
-      !("visualization_data" in item);
+    const isUser = !("visualization_data" in item);
     const text = "text" in item ? item.text : item.content;
     const ts = item.timestamp ?? "";
+
+    let viz: VisualizationData | null = null;
+    if (!isUser && "visualization_data" in item && item.visualization_data) {
+      // reuse the logic from botResponseToMessage or just cast if trusted
+      // For simplicity, let's reuse a small helper or duplicate safe check
+      const vd = item.visualization_data;
+      if (vd && typeof vd === "object") {
+        viz = {
+          activity_name: vd.activity_name,
+          engagement_score: vd.engagement_score,
+          difficulty_score: vd.difficulty_score,
+          cost_estimation: vd.cost_estimation,
+          prep_time_minutes: vd.prep_time_minutes,
+        };
+      }
+    }
+
     return {
       id: index + 1,
       sender: isUser ? "user" : "assistant",
       text,
       personalized: true,
       timestamp: ts,
+      visualization: viz,
     };
   });
 }
 
 export default function HomePage() {
-  const { user, isLoggedIn, logout, chatIds, addChatId } = useAuth();
+  const { user, isLoggedIn, logout, chatIds, addChatId, removeChatId } =
+    useAuth();
   const { lang, toggleLang } = useLanguage();
   const t = useI18n();
   const router = useRouter();
@@ -209,6 +231,39 @@ export default function HomePage() {
     }
   };
 
+  const deleteChat = async (chatId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // prevent opening the chat
+    if (!user?.accessToken) return;
+    if (
+      !confirm(lang === "de" ? "Chat wirklich löschen?" : "Delete this chat?")
+    )
+      return;
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/chat?id=${chatId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `${user.tokenType ?? "Bearer"} ${user.accessToken}`,
+        },
+      });
+      if (!res.ok) {
+        throw new Error("CHAT_DELETE_FAILED");
+      }
+      // success
+      removeChatId(chatId);
+      if (currentChatId === chatId) {
+        startNewChat();
+      }
+    } catch (err) {
+      console.error(err);
+      alert(
+        lang === "de"
+          ? "Chat konnte nicht gelöscht werden."
+          : "Could not delete chat."
+      );
+    }
+  };
+
   const handleSend = async (e: FormEvent) => {
     e.preventDefault();
     const trimmed = input.trim();
@@ -223,18 +278,18 @@ export default function HomePage() {
         };
 
         const url =
-        currentChatId != null
-          ? `${API_BASE_URL}/chat?chat_id=${currentChatId}`
-          : `${API_BASE_URL}/chat`;
+          currentChatId != null
+            ? `${API_BASE_URL}/chat?chat_id=${currentChatId}`
+            : `${API_BASE_URL}/chat`;
 
         const res = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `${user.tokenType ?? "Bearer"} ${user.accessToken}`,
-        },
-        body: JSON.stringify(body),
-      });
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `${user.tokenType ?? "Bearer"} ${user.accessToken}`,
+          },
+          body: JSON.stringify(body),
+        });
         if (!res.ok) {
           throw new Error("CHAT_SEND_FAILED");
         }
@@ -258,19 +313,18 @@ export default function HomePage() {
           timestamp: now,
         };
 
-// 2) append bot message from backend
-      const botMsg: Message = {
-        id: Date.now() + 1,
-        sender: "assistant",
-        text: data.content,
-        personalized: true,
-        timestamp: now, // or later from backend if you add it
-      };
+        // 2) append bot message from backend
+        const botMsg: Message = {
+          id: Date.now() + 1,
+          sender: "assistant",
+          text: data.content,
+          personalized: true,
+          timestamp: now, // or later from backend if you add it
+        };
 
-      setMessages((prev) => [...prev, userMsg, botMsg]);
-      setInput("");
-      return;
-
+        setMessages((prev) => [...prev, userMsg, botMsg]);
+        setInput("");
+        return;
       } catch (err) {
         console.error(err);
         alert(
@@ -336,17 +390,18 @@ export default function HomePage() {
             {t.langSwitch} ({lang.toUpperCase()})
           </button>
 
-          {isLoggedIn && (
-            <span className="user-chip">{user?.username}</span>
-          )}
+          {isLoggedIn && <span className="user-chip">{user?.username}</span>}
 
           {/* Login / Register / Logout schön gruppiert */}
           <div className="auth-header-buttons">
             {isLoggedIn ? (
-              <button className="btn btn-primary" onClick={() => {
-                setMessages([])
-                logout()
-              }}>
+              <button
+                className="btn btn-primary"
+                onClick={() => {
+                  setMessages([]);
+                  logout();
+                }}
+              >
                 {t.logout}
               </button>
             ) : (
@@ -395,8 +450,6 @@ export default function HomePage() {
             </ul>
           </nav>
 
-
-
           {isLoggedIn && (
             <div style={{ marginTop: "16px" }}>
               <div
@@ -415,7 +468,13 @@ export default function HomePage() {
               >
                 {lang === "de" ? "Neuer Chat" : "New chat"}
               </button>
-              <div style={{ marginTop: "8px", maxHeight: "220px", overflowY: "auto" }}>
+              <div
+                style={{
+                  marginTop: "8px",
+                  maxHeight: "220px",
+                  overflowY: "auto",
+                }}
+              >
                 {chatIds.length === 0 && (
                   <div className="sidebar-hint">
                     {lang === "de"
@@ -424,21 +483,36 @@ export default function HomePage() {
                   </div>
                 )}
                 {chatIds.map((id) => (
-                  <button
+                  <div
                     key={id}
-                    type="button"
-                    className="sidebar-item"
-                    style={{
-                      width: "100%",
-                      textAlign: "left",
-                      marginBottom: "4px",
-                      backgroundColor:
-                        currentChatId === id ? "var(--accent-soft)" : undefined,
-                    }}
+                    className={`sidebar-item ${
+                      currentChatId === id ? "active" : ""
+                    }`}
                     onClick={() => loadChat(id)}
                   >
-                    {lang === "de" ? "Chat" : "Chat"} {id}
-                  </button>
+                    <span>
+                      {lang === "de" ? "Chat" : "Chat"} {id}
+                    </span>
+                    <button
+                      className="sidebar-delete-btn"
+                      onClick={(e) => deleteChat(id, e)}
+                      title={lang === "de" ? "Löschen" : "Delete"}
+                    >
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                      </svg>
+                    </button>
+                  </div>
                 ))}
               </div>
             </div>
@@ -494,12 +568,10 @@ export default function HomePage() {
                     </span>
                     <span className="chat-time">{m.timestamp}</span>
                     {m.personalized && isLoggedIn && (
-                      <span className="chip chip-small">
-                        {t.modePersonal}
-                      </span>
+                      <span className="chip chip-small">{t.modePersonal}</span>
                     )}
                   </div>
-                  <div className="chat-bubble">{m.text}</div>
+                  <div className="chat-bubble">{renderMessageContent(m)}</div>
                 </div>
               ))}
             </div>
@@ -520,7 +592,7 @@ export default function HomePage() {
         </main>
       </div>
 
-     <footer className="app-footer">
+      <footer className="app-footer">
         <small>{t.footer}</small>
         <div className="footer-links">
           <button
@@ -539,7 +611,6 @@ export default function HomePage() {
           </button>
         </div>
       </footer>
-      
     </div>
   );
 }
