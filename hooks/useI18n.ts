@@ -8,7 +8,7 @@ export const TEXT = {
     login: "Anmelden",
     logout: "Abmelden",
     register: "Registrieren",
-    navAbout: "Über MINT",
+    navAbout: "Über MINT Zukunft e.V.",
     navProjects: "Projekte",
     navContact: "Kontakt",
     guestHintSidebar:
@@ -53,7 +53,7 @@ export const TEXT = {
     login: "Login",
     logout: "Logout",
     register: "Sign up",
-    navAbout: "About MINT",
+    navAbout: "About MINT Zukunft e.V.",
     navProjects: "Projects",
     navContact: "Contact",
     guestHintSidebar:

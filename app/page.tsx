@@ -193,35 +193,40 @@ export default function HomePage() {
         <div className="app-header-left">
           <h1>{t.headerTitle}</h1>
         </div>
+
         <div className="app-header-right">
-          <button className="btn btn-outline" onClick={toggleLang}>
+          {/* kleiner Sprachschalter */}
+          <button className="lang-toggle" onClick={toggleLang}>
             {t.langSwitch} ({lang.toUpperCase()})
           </button>
+
           {isLoggedIn && (
-            <span className="user-chip">
-              {user?.username}
-            </span>
+            <span className="user-chip">{user?.username}</span>
           )}
-          {isLoggedIn ? (
-            <button className="btn btn-primary" onClick={() => logout()}>
-              {t.logout}
-            </button>
-          ) : (
-            <>
-              <button
-                className="btn btn-outline"
-                onClick={() => router.push("/login")}
-              >
-                {t.login}
+
+          {/* Login / Register / Logout schön gruppiert */}
+          <div className="auth-header-buttons">
+            {isLoggedIn ? (
+              <button className="btn btn-primary" onClick={() => logout()}>
+                {t.logout}
               </button>
-              <button
-                className="btn btn-primary"
-                onClick={() => router.push("/register")}
-              >
-                {t.register}
-              </button>
-            </>
-          )}
+            ) : (
+              <>
+                <button
+                  className="btn btn-outline"
+                  onClick={() => router.push("/login")}
+                >
+                  {t.login}
+                </button>
+                <button
+                  className="btn btn-primary"
+                  onClick={() => router.push("/register")}
+                >
+                  {t.register}
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </header>
 
