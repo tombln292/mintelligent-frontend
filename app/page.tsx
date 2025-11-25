@@ -58,7 +58,6 @@ export default function HomePage() {
     },
   ]);
   const [input, setInput] = useState("");
-  const [search, setSearch] = useState("");
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [loadingChat, setLoadingChat] = useState(false);
 
@@ -231,7 +230,18 @@ export default function HomePage() {
         <aside className="sidebar">
           <nav>
             <ul>
-              <li className="sidebar-item active">{t.navAbout}</li>
+              <li
+                className="sidebar-item active"
+                onClick={() => router.push("/")}
+              >
+                MINTelligent
+              </li>
+              <li
+                className="sidebar-item"
+                onClick={() => router.push("/about")}
+              >
+                {t.navAbout}
+              </li>
               <li
                 className="sidebar-item"
                 onClick={() => router.push("/contact")}
@@ -240,6 +250,7 @@ export default function HomePage() {
               </li>
             </ul>
           </nav>
+
 
 
           {isLoggedIn && (
@@ -361,16 +372,6 @@ export default function HomePage() {
                 {lang === "de" ? "Senden" : "Send"}
               </button>
             </form>
-
-            <div className="search-row">
-              <input
-                className="search-input"
-                type="text"
-                placeholder={t.searchPlaceholder}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
           </section>
         </main>
       </div>
@@ -383,18 +384,18 @@ export default function HomePage() {
             className="footer-link"
             onClick={() => router.push("/impressum")}
           >
-           Impressum
+            {lang === "de" ? "Impressum" : "Imprint"}
           </button>
           <button
             type="button"
             className="footer-link"
             onClick={() => router.push("/datenschutz")}
           >
-            Datenschutzerklärung
+            {lang === "de" ? "Datenschutzerklärung" : "Privacy Policy"}
           </button>
-       </div>
+        </div>
       </footer>
-
+      
     </div>
   );
 }
