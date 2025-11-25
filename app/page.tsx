@@ -316,6 +316,7 @@ export default function HomePage() {
   const [input, setInput] = useState("");
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [loadingChat, setLoadingChat] = useState(false);
+  const [isSending, setIsSending] = useState(false);
 
   // Begrüßungstext neu setzen, wenn Sprache wechselt
   useEffect(() => {
@@ -393,7 +394,9 @@ export default function HomePage() {
   const handleSend = async (e: FormEvent) => {
     e.preventDefault();
     const trimmed = input.trim();
-    if (!trimmed) return;
+    if (!trimmed || isSending) return;
+
+    setIsSending(true);
 
     // EINGELOGGT → Nachricht ans Backend schicken
     if (isLoggedIn && user?.accessToken) {
@@ -453,6 +456,7 @@ export default function HomePage() {
 
         setMessages((prev) => [...prev, userMsg, botMsg]);
         setInput("");
+        setIsSending(false);
         return;
       } catch (err) {
         console.error(err);
@@ -461,6 +465,7 @@ export default function HomePage() {
             ? "Beim Senden an das Backend ist ein Fehler aufgetreten."
             : "Error while sending to backend."
         );
+        setIsSending(false);
         // Fallback: weiter unten
       }
     }
@@ -490,6 +495,7 @@ export default function HomePage() {
 
     setMessages((prev) => [...prev, userMsg, assistantMsg]);
     setInput("");
+    setIsSending(false);
   };
 
   const startNewChat = () => {
@@ -711,8 +717,38 @@ export default function HomePage() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
               />
-              <button type="submit" className="btn btn-primary">
-                {lang === "de" ? "Senden" : "Send"}
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={isSending || !input.trim()}
+              >
+                {isSending ? (
+                  <>
+                    <svg
+                      className="loading-spinner"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      style={{
+                        animation: "spin 1s linear infinite",
+                        marginRight: "8px",
+                      }}
+                    >
+                      <circle cx="12" cy="12" r="10" opacity="0.25" />
+                      <path d="M12 2a10 10 0 0 1 10 10" />
+                    </svg>
+                    {lang === "de" ? "Senden..." : "Sending..."}
+                  </>
+                ) : lang === "de" ? (
+                  "Senden"
+                ) : (
+                  "Send"
+                )}
               </button>
             </form>
           </section>

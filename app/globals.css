@@ -908,3 +908,31 @@ textarea {
     align-items: center;
   }
 }
+
+/* === Loading Spinner Animation === */
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-spinner {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* === Disabled Button Styles === */
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-primary:disabled:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+}
