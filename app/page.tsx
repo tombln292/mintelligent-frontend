@@ -152,10 +152,15 @@ function mapHistoryToMessages(history: BackendHistoryItem[]): Message[] {
       const vd = item.visualization_data;
       if (vd && typeof vd === "object") {
         viz = {
+          // @ts-ignore
           activity_name: vd.activity_name,
+          // @ts-ignore
           engagement_score: vd.engagement_score,
+          // @ts-ignore
           difficulty_score: vd.difficulty_score,
+          // @ts-ignore
           cost_estimation: vd.cost_estimation,
+          // @ts-ignore
           prep_time_minutes: vd.prep_time_minutes,
         };
       }
