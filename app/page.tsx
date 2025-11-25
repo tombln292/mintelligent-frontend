@@ -34,7 +34,7 @@ type Message = {
 export function VisualCard({ data }: { data: VisualizationData }) {
   type LayoutType = "table" | "bars" | "pie";
 
-  const layouts: LayoutType[] = ["table", "bars", "pie"];
+  const layouts: LayoutType[] = ["bars"];
   const layout: LayoutType =
     layouts[Math.floor(Math.random() * layouts.length)];
 

@@ -724,3 +724,187 @@ textarea {
     padding: 16px 14px;
   }
 }
+
+/* === Base card === */
+
+.visual-card {
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  padding: 16px 18px;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 360px;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+}
+
+.visual-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.visual-card-header strong {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.visual-card-layout-tag {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 6px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  color: #6b7280;
+  background: #f9fafb;
+}
+
+.visual-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* === Generic row styles === */
+
+.visual-card-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.visual-card-label {
+  color: #6b7280;
+}
+
+.visual-card-score {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: #111827;
+}
+
+.visual-card-value {
+  font-variant-numeric: tabular-nums;
+  color: #111827;
+}
+
+/* === Layout modifiers (optional slight tweaks) === */
+
+.visual-card--bars .visual-card-body,
+.visual-card--pie .visual-card-body {
+  gap: 10px;
+}
+
+/* === Shared chart wrapper === */
+
+.visual-card-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* === BAR CHART LAYOUT === */
+
+.visual-card-chart--bars .visual-card-row {
+  align-items: center;
+}
+
+.visual-card-bar-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.visual-card-bar-track {
+  position: relative;
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  overflow: hidden;
+}
+
+.visual-card-bar-fill {
+  position: absolute;
+  inset: 0;
+  width: 0%;
+  border-radius: inherit;
+  transition: width 200ms ease-out;
+}
+
+/* Match colors used in the pie gradient (from the TSX) */
+.visual-card-bar-fill--engagement {
+  background: #4caf50; /* green */
+}
+
+.visual-card-bar-fill--difficulty {
+  background: #ff9800; /* orange */
+}
+
+/* === PIE CHART LAYOUT === */
+/* === PIE CHART LAYOUT (WIDER) === */
+
+.visual-card-chart--pie {
+  display: flex;
+  flex-direction: row; /* Always lay out horizontally */
+  align-items: center;
+  gap: 20px; /* More space between pie and legend */
+}
+
+/* Bigger pie for more visual width */
+.visual-card-pie {
+  width: 150px; /* Increased from 110px */
+  height: 150px; /* Keep same as width to stay circular */
+  border-radius: 50%;
+  border: 4px solid #f3f4f6;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12);
+  flex-shrink: 0;
+}
+
+/* Legend stays the same, but benefits from horizontal layout */
+.visual-card-pie-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.visual-card-legend-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.visual-card-legend-swatch--engagement {
+  background: #4caf50;
+}
+
+.visual-card-legend-swatch--difficulty {
+  background: #ff9800;
+}
+
+/* Make pie + legend sit nicely together on larger screens */
+.visual-card-chart--pie .visual-card-pie,
+.visual-card-chart--pie .visual-card-pie-legend {
+  /* You can keep this column on small screens via media query below */
+}
+
+/* === Responsive tweaks === */
+
+@media (min-width: 480px) {
+  .visual-card-chart--pie {
+    flex-direction: row;
+    align-items: center;
+  }
+}
