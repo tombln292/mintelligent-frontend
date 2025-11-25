@@ -11,13 +11,19 @@ export type AuthUser = {
   username: string; // wir nehmen E-Mail als username
   accessToken: string; // kommt vom Backend
   tokenType: string; // z.B. "bearer"
-  chatIds: string[]; // Liste der bisherigen Chats
+  chatIds: {
+    id: string;
+    title: string;
+  }[];
 };
 
 type AuthContextType = {
   user: AuthUser | null;
   isLoggedIn: boolean;
-  chatIds: string[];
+  chatIds: {
+    id: string;
+    title: string;
+  }[];
   login: (params: {
     identifier: string;
     password: string;
@@ -29,7 +35,7 @@ type AuthContextType = {
     role: UserRole;
   }) => Promise<void>;
   logout: () => Promise<void>;
-  addChatId: (id: string) => void;
+  addChatId: (id: string, title: string) => void;
   removeChatId: (id: string) => void;
 };
 
@@ -109,7 +115,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const data = (await res.json()) as LoginResponse;
 
-    const chatIds = (data.history ?? []).map((chat) => String(chat.chat_id));
+    const chatIds = (data.history ?? []).map((chat) => ({
+      id: String(chat.chat_id),
+      title: chat.title,
+    }));
 
     const authUser: AuthUser = {
       id: data.user_id,
@@ -161,10 +170,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(null);
   };
 
-  const addChatId = (id: string) => {
+  const addChatId = (id: string, title: string) => {
     if (!user) return;
-    if (user.chatIds.includes(id)) return;
-    const updated: AuthUser = { ...user, chatIds: [...user.chatIds, id] };
+    if (user.chatIds.some((chat) => chat.id === id)) return;
+    const updated: AuthUser = {
+      ...user,
+      chatIds: [...user.chatIds, { id, title }],
+    };
     setUser(updated);
   };
 
@@ -172,7 +184,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (!user) return;
     const updated: AuthUser = {
       ...user,
-      chatIds: user.chatIds.filter((cid) => cid !== id),
+      chatIds: user.chatIds.filter((chat) => chat.id !== id),
     };
     setUser(updated);
   };

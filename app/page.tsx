@@ -423,9 +423,11 @@ export default function HomePage() {
         const data = (await res.json()) as BotResponse;
 
         const chatIdStr = String(data.chat_id);
+        // @ts-ignore
+        const title = data.title;
         if (!currentChatId) {
           setCurrentChatId(chatIdStr);
-          addChatId(chatIdStr);
+          addChatId(chatIdStr, title);
         }
 
         const now = new Date().toLocaleTimeString();
@@ -609,20 +611,18 @@ export default function HomePage() {
                       : "No chats saved yet."}
                   </div>
                 )}
-                {chatIds.map((id) => (
+                {chatIds.map((chat) => (
                   <div
-                    key={id}
+                    key={chat.id}
                     className={`sidebar-item ${
-                      currentChatId === id ? "active" : ""
+                      currentChatId === chat.id ? "active" : ""
                     }`}
-                    onClick={() => loadChat(id)}
+                    onClick={() => loadChat(chat.id)}
                   >
-                    <span>
-                      {lang === "de" ? "Chat" : "Chat"} {id}
-                    </span>
+                    <span>{chat.title}</span>
                     <button
                       className="sidebar-delete-btn"
-                      onClick={(e) => deleteChat(id, e)}
+                      onClick={(e) => deleteChat(chat.id, e)}
                       title={lang === "de" ? "Löschen" : "Delete"}
                     >
                       <svg
