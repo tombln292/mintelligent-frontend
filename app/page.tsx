@@ -331,6 +331,7 @@ export default function HomePage() {
 
   const loadChat = async (chatId: string) => {
     if (!user?.accessToken) return;
+    setMessages([]);
     setLoadingChat(true);
     try {
       const res = await fetch(`${API_BASE_URL}/open?id=${chatId}`, {
@@ -342,7 +343,7 @@ export default function HomePage() {
         throw new Error("CHAT_LOAD_FAILED");
       }
       const data = (await res.json()) as ChatHistoryResponse;
-      setCurrentChatId(data.chat_id);
+      setCurrentChatId(chatId);
       setMessages(mapHistoryToMessages(data.history));
     } catch (err) {
       console.error(err);
