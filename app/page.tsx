@@ -9,13 +9,114 @@ import { useRouter } from "next/navigation";
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
 
+type VisualizationData = {
+  activity_name: string;
+  engagement_score: number; // 1-10
+  difficulty_score: number; // 1-10
+  cost_estimation: "Niedrig" | "Mittel" | "Hoch";
+  prep_time_minutes: number;
+};
+
 type Message = {
   id: number;
   sender: "user" | "assistant";
   text: string;
   personalized: boolean;
   timestamp: string;
+  visualization?: VisualizationData | null;
 };
+
+/**
+ * Small visual card to present activity complexity / metadata returned from the backend.
+ * Place css for .visual-card, .visual-card-row, .visual-card-score etc. in your styles.
+ */
+export function VisualCard({ data }: { data: VisualizationData }) {
+  return (
+    <div className="visual-card" role="group" aria-label="activity-visualization">
+      <div className="visual-card-header">
+        <strong>{data.activity_name}</strong>
+      </div>
+      <div className="visual-card-body">
+        <div className="visual-card-row">
+          <span className="visual-card-label">Engagement</span>
+          <span className="visual-card-score">{data.engagement_score}/10</span>
+        </div>
+        <div className="visual-card-row">
+          <span className="visual-card-label">Difficulty</span>
+          <span className="visual-card-score">{data.difficulty_score}/10</span>
+        </div>
+        <div className="visual-card-row">
+          <span className="visual-card-label">Costs</span>
+          <span className="visual-card-value">{data.cost_estimation}</span>
+        </div>
+        <div className="visual-card-row">
+          <span className="visual-card-label">Prep time</span>
+          <span className="visual-card-value">{data.prep_time_minutes} min</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Helper to render message content: text + optional visualization card.
+ * The main chat rendering can replace direct {m.text} with renderMessageContent(m)
+ */
+export function renderMessageContent(m: Message) {
+  return (
+    <>
+      <div>{m.text}</div>
+      {m.visualization && <VisualCard data={m.visualization} />}
+    </>
+  );
+}
+
+/**
+ * Convert backend BotResponse to Message (includes optional visualization_data mapping).
+ * Use this helper when creating bot messages so visualization gets attached to Message.
+ */
+export function botResponseToMessage(
+  data: {
+    role?: "assistant";
+    chat_id: number | string;
+    content: string;
+    status: string;
+    visualization_data?: any;
+  }
+): Message {
+  const now = new Date().toLocaleTimeString();
+  let viz: VisualizationData | null = null;
+  if (data.visualization_data && typeof data.visualization_data === "object") {
+    // Basic safe mapping / validation
+    const vd = data.visualization_data;
+    if (
+      typeof vd.activity_name === "string" &&
+      typeof vd.engagement_score === "number" &&
+      typeof vd.difficulty_score === "number" &&
+      (vd.cost_estimation === "Niedrig" ||
+        vd.cost_estimation === "Mittel" ||
+        vd.cost_estimation === "Hoch") &&
+      typeof vd.prep_time_minutes === "number"
+    ) {
+      viz = {
+        activity_name: vd.activity_name,
+        engagement_score: vd.engagement_score,
+        difficulty_score: vd.difficulty_score,
+        cost_estimation: vd.cost_estimation,
+        prep_time_minutes: vd.prep_time_minutes,
+      };
+    }
+  }
+
+  return {
+    id: Date.now() + Math.floor(Math.random() * 1000),
+    sender: "assistant",
+    text: data.content,
+    personalized: true,
+    timestamp: now,
+    visualization: viz,
+  };
+}
 
 type ChatHistoryResponse = {
   chat_id: string;
